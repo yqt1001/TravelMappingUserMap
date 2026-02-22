@@ -1,1 +1,1 @@
-{"v":1,"region":"BRASE","routes":{"BRASE|BR101":["BRASE/brabr/brase.br101.json"],"BRASE|BR235":["BRASE/brabr/brase.br235.json"]}}
+{"v":1,"region":"BRASE","routes":{"BRASE|BR101":["BRASE/shards/BRASE-0001.json"],"BRASE|BR235":["BRASE/shards/BRASE-0001.json"]}}

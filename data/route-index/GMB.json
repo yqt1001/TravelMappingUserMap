@@ -1,1 +1,1 @@
-{"v":1,"region":"GMB","routes":{"GMB|TAH7":["GMB/afrtah/gmb.tah7.json"],"GMB|TAH7BAR":["GMB/afrtah/gmb.tah7bar.json"]}}
+{"v":1,"region":"GMB","routes":{"GMB|TAH7":["GMB/shards/GMB-0001.json"],"GMB|TAH7BAR":["GMB/shards/GMB-0001.json"]}}

@@ -1,1 +1,1 @@
-{"v":1,"region":"ESPML","routes":{"ESPML|ML101":["ESPML/espn/espml.ml101.json"],"ESPML|ML204":["ESPML/espn/espml.ml204.json"],"ESPML|ML300":["ESPML/espn/espml.ml300.json"],"ESPML|NNADOR":["ESPML/espn/espml.nnador.json"]}}
+{"v":1,"region":"ESPML","routes":{"ESPML|ML101":["ESPML/shards/ESPML-0001.json"],"ESPML|ML204":["ESPML/shards/ESPML-0001.json"],"ESPML|ML300":["ESPML/shards/ESPML-0001.json"],"ESPML|NNADOR":["ESPML/shards/ESPML-0001.json"]}}

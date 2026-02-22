@@ -1,1 +1,1 @@
-{"v":1,"region":"BRAAP","routes":{"BRAAP|BR156":["BRAAP/brabr/braap.br156.json"],"BRAAP|BR210":["BRAAP/brabr/braap.br210.json"]}}
+{"v":1,"region":"BRAAP","routes":{"BRAAP|BR156":["BRAAP/shards/BRAAP-0001.json"],"BRAAP|BR210":["BRAAP/shards/BRAAP-0001.json"]}}

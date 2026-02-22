@@ -1,1 +1,1 @@
-{"v":1,"region":"BGD","routes":{"BGD|AH1":["BGD/bgdah/bgd.ah001.json"],"BGD|AH1JES":["BGD/bgdah/bgd.ah001jes.json"],"BGD|AH2":["BGD/bgdah/bgd.ah002.json"],"BGD|AH41":["BGD/bgdah/bgd.ah041.json"]}}
+{"v":1,"region":"BGD","routes":{"BGD|AH1":["BGD/shards/BGD-0001.json"],"BGD|AH1JES":["BGD/shards/BGD-0001.json"],"BGD|AH2":["BGD/shards/BGD-0001.json"],"BGD|AH41":["BGD/shards/BGD-0001.json"]}}

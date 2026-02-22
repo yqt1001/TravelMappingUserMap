@@ -1,1 +1,1 @@
-{"v":1,"region":"LIE","routes":{"LIE|GTS":["LIE/chegts/lie.gts.json"],"LIE|H16":["LIE/cheh/lie.h016.json"]}}
+{"v":1,"region":"LIE","routes":{"LIE|GTS":["LIE/shards/LIE-0001.json"],"LIE|H16":["LIE/shards/LIE-0001.json"]}}

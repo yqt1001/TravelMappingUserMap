@@ -14,7 +14,7 @@ Lightweight browser app that renders a Travel Mapping user's traveled highway se
 
 1. Parse username list entries into route/waypoint segment requests.
 2. Load region route indexes from `data/route-index`.
-3. Load matching compact route files from `data/routes`.
+3. Load matching compact route shard files from `data/routes`.
 4. Match segments (including cross-region chaining) and render polylines.
 
 ## Known limitations

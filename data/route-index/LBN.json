@@ -1,1 +1,1 @@
-{"v":1,"region":"LBN","routes":{"LBN|M30":["LBN/asimo/lbn.m030.json"],"LBN|M51":["LBN/asimo/lbn.m051.json"]}}
+{"v":1,"region":"LBN","routes":{"LBN|M30":["LBN/shards/LBN-0001.json"],"LBN|M51":["LBN/shards/LBN-0001.json"]}}

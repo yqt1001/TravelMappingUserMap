@@ -12,8 +12,8 @@ This folder contains a utility script that converts TravelMapping `.wpt` files i
   - `data/hwy-data` (preferred), or
   - `data/hwy_data` (fallback)
 - Parses all `.wpt` files it finds.
-- Builds compact route JSON files under:
-  - `data/routes/<REGION>/<SYSTEM>/<route-file>.json`
+- Builds compact **route shard** JSON files under:
+  - `data/routes/<REGION>/shards/<REGION>-NNNN.json`
 - Builds region route indexes under:
   - `data/route-index/<REGION>.json`
 - Builds a global route-token index for cross-region stitching:
@@ -22,7 +22,11 @@ This folder contains a utility script that converts TravelMapping `.wpt` files i
 
 ## Output schema (high level)
 
-- Route file fields:
+- Route shard fields:
+  - `v` schema version
+  - `shard` metadata with region and shard id
+  - `routes` array of compact route objects
+- Route object fields inside `routes`:
   - `v` schema version
   - `src` original source path
   - `sys` system code
@@ -49,9 +53,10 @@ node scripts/build-highway-json.mjs
 ### Optional arguments
 
 - `--src=<path>`: source directory to read `.wpt` files from
-- `--outRoutes=<path>`: output directory for route files (default `data/routes`)
+- `--outRoutes=<path>`: output directory for route shard files (default `data/routes`)
 - `--outIndex=<path>`: output directory for region indexes (default `data/route-index`)
 - `--regions=R1,R2,...`: only build selected regions
+- `--shardSize=<n>`: routes per shard file (default `200`)
 
 ## Examples
 

@@ -1,1 +1,1 @@
-{"v":1,"region":"ARE","routes":{"ARE|M5":["ARE/asim/are.m005.json"],"ARE|M7":["ARE/asim/are.m007.json"],"ARE|M9":["ARE/asim/are.m009.json"]}}
+{"v":1,"region":"ARE","routes":{"ARE|M5":["ARE/shards/ARE-0001.json"],"ARE|M7":["ARE/shards/ARE-0001.json"],"ARE|M9":["ARE/shards/ARE-0001.json"]}}

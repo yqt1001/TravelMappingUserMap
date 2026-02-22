@@ -1,1 +1,1 @@
-{"v":1,"region":"INDMN","routes":{"INDMN|AH1X":["INDMN/indaho/indmn.ah001x.json"],"INDMN|AH2X":["INDMN/indaho/indmn.ah002x.json"]}}
+{"v":1,"region":"INDMN","routes":{"INDMN|AH1X":["INDMN/shards/INDMN-0001.json"],"INDMN|AH2X":["INDMN/shards/INDMN-0001.json"]}}

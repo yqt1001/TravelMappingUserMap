@@ -1,1 +1,1 @@
-{"v":1,"region":"SPM","routes":{"SPM|N1":["SPM/spmn/spm.n001.json"],"SPM|N2":["SPM/spmn/spm.n002.json"],"SPM|N3":["SPM/spmn/spm.n003.json"],"SPM|N4":["SPM/spmn/spm.n004.json"]}}
+{"v":1,"region":"SPM","routes":{"SPM|N1":["SPM/shards/SPM-0001.json"],"SPM|N2":["SPM/shards/SPM-0001.json"],"SPM|N3":["SPM/shards/SPM-0001.json"],"SPM|N4":["SPM/shards/SPM-0001.json"]}}

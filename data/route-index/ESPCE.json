@@ -1,1 +1,1 @@
-{"v":1,"region":"ESPCE","routes":{"ESPCE|N352":["ESPCE/espn/espce.n352.json"],"ESPCE|N354":["ESPCE/espn/espce.n354.json"],"ESPCE|N362":["ESPCE/espn/espce.n362.json"]}}
+{"v":1,"region":"ESPCE","routes":{"ESPCE|N352":["ESPCE/shards/ESPCE-0001.json"],"ESPCE|N354":["ESPCE/shards/ESPCE-0001.json"],"ESPCE|N362":["ESPCE/shards/ESPCE-0001.json"]}}

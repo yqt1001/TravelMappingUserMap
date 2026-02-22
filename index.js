@@ -275,7 +275,7 @@
 
     if (!missingPaths.length) {
       setHighwayStatus(
-        `Using cached route files (${state.allRoutes.length}) for requested list.`
+        `Using cached route data (${state.allRoutes.length} routes in memory) for requested list.`
       );
       const unresolvedRouteKeys = keys.filter(
         (key) => !(state.routePathIndex.get(key) || []).length
@@ -294,9 +294,9 @@
     }
 
     for (let i = 0; i < missingPaths.length; i += 1) {
-      if (i % 50 === 0 || i === missingPaths.length - 1) {
+      if (i % 25 === 0 || i === missingPaths.length - 1) {
         setHighwayStatus(
-          `Fetching/parsing needed highways: ${i + 1}/${missingPaths.length}`
+          `Fetching/parsing route shards: ${i + 1}/${missingPaths.length}`
         );
       }
 
@@ -306,23 +306,44 @@
       if (!response.ok) {
         state.diagnostics.push({
           severity: "warning",
-          message: `Could not fetch route JSON file: ${path}`,
+          message: `Could not fetch route data JSON file: ${path}`,
         });
         continue;
       }
 
       const body = await response.json();
-      const parsed = parseCompactRouteJson(path, body);
-      if (!parsed) {
-        continue;
+      let parsedThisFile = 0;
+      if (body && typeof body === "object" && Array.isArray(body.routes)) {
+        for (let routeIdx = 0; routeIdx < body.routes.length; routeIdx += 1) {
+          const parsed = parseCompactRouteJson(
+            `${path}#${routeIdx + 1}`,
+            body.routes[routeIdx]
+          );
+          if (!parsed) {
+            continue;
+          }
+          addParsedRouteObject(parsed);
+          parsedThisFile += 1;
+        }
+      } else {
+        const parsed = parseCompactRouteJson(path, body);
+        if (parsed) {
+          addParsedRouteObject(parsed);
+          parsedThisFile += 1;
+        }
       }
-      addParsedRouteObject(parsed);
+      if (!parsedThisFile) {
+        state.diagnostics.push({
+          severity: "warning",
+          message: `No valid routes parsed from ${path}`,
+        });
+      }
       state.loadedRoutePaths.add(path);
     }
 
     state.highwayLoadedFromGithub = true;
     setHighwayStatus(
-      `Loaded ${state.allRoutes.length} local route file(s) needed by this user list.`
+      `Loaded ${state.allRoutes.length} local route(s) needed by this user list.`
     );
 
     const unresolvedRouteKeys = keys.filter(
