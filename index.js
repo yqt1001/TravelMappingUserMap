@@ -148,7 +148,7 @@
           els.summary.textContent =
             `Username: ${username}\n` +
             `Unique routes requested: ${routeKeys.size}\n` +
-            `Route files in memory: ${state.allRoutes.length}\n` +
+            `Routes in memory: ${state.allRoutes.length}\n` +
             `List lines parsed: ${result.stats.parsedLines}\n` +
             `Matched travel segments: ${result.segments.length}\n` +
             `Unmatched lines: ${result.stats.unmatchedLines}\n` +
