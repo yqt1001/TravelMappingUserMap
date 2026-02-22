@@ -2,6 +2,8 @@
 
 Lightweight browser app that renders a Travel Mapping user's traveled highway segments on a Leaflet map.
 
+This is deployed as a GitHub page! Access the app here: https://yqt1001.github.io/TravelMappingUserMap/
+
 ## What it does
 
 - Takes a Travel Mapping username.

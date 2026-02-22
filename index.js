@@ -118,6 +118,7 @@
           if (els.summary) {
             els.summary.textContent = `Could not load list file for "${username}".`;
           }
+          setHighwayStatus(error.message);
           renderOutput([{ severity: "error", message: error.message }], "");
           return;
         }
@@ -131,6 +132,7 @@
           if (els.summary) {
             els.summary.textContent = "Could not load local highway JSON data.";
           }
+          setHighwayStatus(error.message);
           renderOutput([{ severity: "error", message: error.message }], "");
           return;
         }
@@ -219,6 +221,24 @@
     }
   }
 
+  function isBandwidthLimitStatus(status) {
+    return status === 403 || status === 429 || status === 503;
+  }
+
+  function buildHttpFailureMessage(response, resourceLabel) {
+    const status = response ? response.status : 0;
+    if (status === 429) {
+      return `${resourceLabel} failed to load (HTTP 429: rate/bandwidth limit reached).`;
+    }
+    if (status === 403) {
+      return `${resourceLabel} failed to load (HTTP 403: access blocked or bandwidth limit reached).`;
+    }
+    if (status === 503) {
+      return `${resourceLabel} failed to load (HTTP 503: service unavailable, possibly bandwidth limit).`;
+    }
+    return `${resourceLabel} failed to load (HTTP ${status || "unknown"}).`;
+  }
+
   async function ensureHighwayDataLoaded(routeKeys, chainRouteTokens, forceReload) {
     if (forceReload) {
       resetHighwayData();
@@ -304,9 +324,17 @@
       const url = `${LOCAL_ROUTE_DATA_BASE_URL}/${path}`;
       const response = await fetch(url);
       if (!response.ok) {
+        if (response.status === 404) {
+          continue;
+        }
+        if (isBandwidthLimitStatus(response.status)) {
+          const message = buildHttpFailureMessage(response, `Route data shard (${path})`);
+          setHighwayStatus(message);
+          throw new Error(message);
+        }
         state.diagnostics.push({
           severity: "warning",
-          message: `Could not fetch route data JSON file: ${path}`,
+          message: buildHttpFailureMessage(response, `Route data shard (${path})`),
         });
         continue;
       }
@@ -405,7 +433,14 @@
     }
 
     if (!response.ok) {
-      throw new Error(`Failed loading route index for region ${normalizedRegion}.`);
+      const message = buildHttpFailureMessage(
+        response,
+        `Route index for region ${normalizedRegion}`
+      );
+      if (isBandwidthLimitStatus(response.status)) {
+        setHighwayStatus(message);
+      }
+      throw new Error(message);
     }
 
     const body = await response.json();
@@ -428,6 +463,17 @@
       if (response.ok) {
         return response.text();
       }
+      if (response.status === 404) {
+        continue;
+      }
+      const message = buildHttpFailureMessage(
+        response,
+        `User list file for ${name}`
+      );
+      if (isBandwidthLimitStatus(response.status)) {
+        setHighwayStatus(message);
+      }
+      throw new Error(message);
     }
 
     throw new Error(
@@ -522,7 +568,14 @@
       return null;
     }
     if (!response.ok) {
-      throw new Error("Failed loading route token index for cross-region stitching.");
+      const message = buildHttpFailureMessage(
+        response,
+        "Route token index for cross-region stitching"
+      );
+      if (isBandwidthLimitStatus(response.status)) {
+        setHighwayStatus(message);
+      }
+      throw new Error(message);
     }
 
     const body = await response.json();
