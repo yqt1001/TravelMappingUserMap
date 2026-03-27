@@ -1,84 +1,88 @@
-# Highway JSON Build Script
+# Data Build Scripts
 
-This folder contains a utility script that converts TravelMapping `.wpt` files into compact JSON files used by the web app.
+Scripts in this folder prepare deployable app data from Travel Mapping sources.
 
-## Script
+## Script index
 
-- `build-highway-json.mjs`
+- `build-tmg-user-json.mjs` - build JSON for one user
+- `build-all-tmg-user-json.mjs` - build JSON for all users
+- `build-highway-json.mjs` - legacy script kept for reference
 
-## What it does
+## `build-tmg-user-json.mjs`
 
-- Reads highway source data from:
-  - `data/hwy-data` (preferred), or
-  - `data/hwy_data` (fallback)
-- Parses all `.wpt` files it finds.
-- Builds compact **route shard** JSON files under:
-  - `data/routes/<REGION>/shards/<REGION>-NNNN.json`
-- Builds region route indexes under:
-  - `data/route-index/<REGION>.json`
-- Builds a global route-token index for cross-region stitching:
-  - `data/route-index/route-token-index.json`
-- Recreates both output folders from scratch on each run.
+### Purpose
 
-## Output schema (high level)
+- Reads `data/tm-master-traveled.tmg` (`TMG 2.0 traveled` format).
+- Finds one target username in the traveler list.
+- Extracts edges traveled by that user only.
+- Merges contiguous traveled edges into longer polylines.
+- Quantizes coordinates into compact integer arrays.
+- Writes output to `data/tmg-users/<username>.json`.
 
-- Route shard fields:
-  - `v` schema version
-  - `shard` metadata with region and shard id
-  - `routes` array of compact route objects
-- Route object fields inside `routes`:
-  - `v` schema version
-  - `src` original source path
-  - `sys` system code
-  - `rg` region
-  - `rt` route token
-  - `pt` array of `[lat, lon]`
-  - `lb` array of label arrays aligned with `pt`
-- Region index fields:
-  - `v` schema version
-  - `region`
-  - `routes` map of normalized route key to route JSON path(s)
-- Route-token index fields:
-  - `v` schema version
-  - `tokens` map of normalized route token to route JSON path(s)
+### Command
 
-## Usage
-
-Run from the project root:
+Run from project root:
 
 ```bash
-node scripts/build-highway-json.mjs
+node scripts/build-tmg-user-json.mjs --user=<username>
 ```
 
-### Optional arguments
+### Options
 
-- `--src=<path>`: source directory to read `.wpt` files from
-- `--outRoutes=<path>`: output directory for route shard files (default `data/routes`)
-- `--outIndex=<path>`: output directory for region indexes (default `data/route-index`)
-- `--regions=R1,R2,...`: only build selected regions
-- `--shardSize=<n>`: routes per shard file (default `200`)
+- `--src=<path>`: TMG source file (default `data/tm-master-traveled.tmg`)
+- `--outDir=<path>`: output directory (default `data/tmg-users`)
+- `--q=<integer>`: quantization scale (default `100000`)
 
-## Examples
-
-Build everything:
+### Examples
 
 ```bash
-node scripts/build-highway-json.mjs
+node scripts/build-tmg-user-json.mjs --user=yqt1001
 ```
-
-Build only Ontario and Sao Paulo:
 
 ```bash
-node scripts/build-highway-json.mjs --regions=ON,BRA-SP
+node scripts/build-tmg-user-json.mjs --user=mapcat --q=100000
 ```
 
-Use an explicit source directory:
+## `build-all-tmg-user-json.mjs`
+
+### Purpose
+
+- Reads traveler usernames from the TMG traveler line.
+- Runs the single-user builder for each traveler.
+- Writes outputs to `data/tmg-users/<username>.json`.
+
+### Command
+
+Run from project root:
 
 ```bash
-node scripts/build-highway-json.mjs --src=data/hwy_data
+node scripts/build-all-tmg-user-json.mjs
 ```
 
-## Notes
+### Options
 
-- The app expects the generated `data/routes` and `data/route-index` folders to exist.
-- If source data changes, rerun the script to refresh JSON outputs.
+- `--src=<path>`: TMG source file (default `data/tm-master-traveled.tmg`)
+- `--outDir=<path>`: output directory (default `data/tmg-users`)
+- `--q=<integer>`: quantization scale passed to each build (default `100000`)
+- `--threads=<integer>`: parallel worker count (default `4`)
+- `--force=true|false`: rebuild existing user files (default `false`)
+- `--startAt=<username>`: alphabetical resume point (useful after interruption)
+
+### Examples
+
+```bash
+node scripts/build-all-tmg-user-json.mjs --startAt=6lane
+```
+
+```bash
+node scripts/build-all-tmg-user-json.mjs --force=true
+```
+
+```bash
+node scripts/build-all-tmg-user-json.mjs --threads=4
+```
+
+## Legacy script
+
+- `build-highway-json.mjs` remains in the repo for historical/reference purposes.
+- The app no longer loads `data/routes` or `data/route-index`.

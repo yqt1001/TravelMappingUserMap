@@ -109,6 +109,19 @@
       word-break: break-word;
     }
 
+    .output-log a {
+      color: #7ec8ff;
+      text-decoration: underline;
+    }
+
+    .output-log a:visited {
+      color: #c7b9ff;
+    }
+
+    .output-log a:hover {
+      color: #aeddff;
+    }
+
     details.advanced {
       border: 1px solid #ddd;
       border-radius: 8px;
@@ -238,11 +251,7 @@ No output yet.</div>
       <section class="block">
         <details class="advanced">
           <summary>Advanced Options</summary>
-          <label class="checkbox-row" for="enableDetailedDebug">
-            <input id="enableDetailedDebug" type="checkbox" />
-            Enable detailed debug report
-          </label>
-          <button id="reloadHighwayBtn" type="button">Reload Local Highway JSON Cache</button>
+          <button id="reloadHighwayBtn" type="button">Reload Current User TMG JSON</button>
           <button id="copyDebugBtn" type="button">Copy Output</button>
         </details>
         <p class="license-note">
