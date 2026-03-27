@@ -85,12 +85,12 @@
 
         const loaded = await loadAndRenderUser(username);
         if (!loaded) {
-          const message = `No local TMG user JSON found for "${username}".`;
+          const message = `No user found for "${username}".`;
           if (els.summary) {
             els.summary.textContent = message;
           }
           renderOutput([{ severity: "error", message }], "");
-          setHighwayStatus(`No local TMG user JSON found for ${username}.`);
+          setHighwayStatus(`No user found for ${username}.`);
           return;
         }
 

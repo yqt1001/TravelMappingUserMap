@@ -1,0 +1,99 @@
+name: Update TMG User Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: "Rebuild even if source hash is unchanged"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-tmg-users
+  cancel-in-progress: false
+
+jobs:
+  update-user-json:
+    runs-on: ubuntu-latest
+    env:
+      TMG_TRAVELED_URL: ${{ secrets.TMG_TRAVELED_URL }}
+      FORCE_REBUILD: ${{ inputs.force_rebuild && 'true' || 'false' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Download source and detect change
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TMG_TRAVELED_URL:-}" ]; then
+            echo "::error::Missing secret TMG_TRAVELED_URL."
+            exit 1
+          fi
+
+          mkdir -p tmp
+          curl -fL --retry 3 --retry-delay 5 "$TMG_TRAVELED_URL" -o tmp/tm-master-traveled.tmg
+
+          new_hash="$(sha256sum tmp/tm-master-traveled.tmg | awk '{print $1}')"
+          old_hash=""
+          if [ -f data/tmg-source.sha256 ]; then
+            old_hash="$(tr -d '[:space:]' < data/tmg-source.sha256)"
+          fi
+
+          source_changed="false"
+          if [ "${FORCE_REBUILD}" = "true" ] || [ "${new_hash}" != "${old_hash}" ]; then
+            source_changed="true"
+          fi
+
+          echo "source_changed=${source_changed}" >> "$GITHUB_OUTPUT"
+          echo "new_hash=${new_hash}" >> "$GITHUB_OUTPUT"
+          echo "old_hash=${old_hash}" >> "$GITHUB_OUTPUT"
+
+      - name: Build all user JSON
+        if: steps.source.outputs.source_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build-all-tmg-user-json.mjs --force=true --src=tmp/tm-master-traveled.tmg --threads=2
+
+      - name: Update source hash marker
+        if: steps.source.outputs.source_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf "%s\n" "${{ steps.source.outputs.new_hash }}" > data/tmg-source.sha256
+
+      - name: Check for repository changes
+        id: diff
+        if: steps.source.outputs.source_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/tmg-users data/tmg-source.sha256; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push updates
+        if: steps.source.outputs.source_changed == 'true' && steps.diff.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/tmg-users data/tmg-source.sha256
+          git commit -m "Update TravelMapping user data"
+          git push
