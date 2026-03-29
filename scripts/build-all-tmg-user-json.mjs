@@ -16,6 +16,8 @@ const quantizeScale = parseQuantizeScale(args.q);
 const force = parseBool(args.force, false);
 const startAt = parseStartAt(args.startAt);
 const threads = parseThreads(args.threads);
+const skipIfPathCountSame = parseBool(args.skipIfPathCountSame, false);
+const maxAgeDays = parseMaxAgeDays(args.maxAgeDays);
 
 const discoveredUsers = await scanTravelerUsernames(sourceFile);
 if (!discoveredUsers.length) {
@@ -37,11 +39,17 @@ if (startAt) {
 console.log(`Quantize scale: ${quantizeScale}`);
 console.log(`Force rebuild: ${force ? "yes" : "no (skip existing files)"}`);
 console.log(`Threads: ${threads}`);
+console.log(`Skip if path count same: ${skipIfPathCountSame ? "yes" : "no"}`);
+console.log(`Max age days for skip check: ${maxAgeDays}`);
 console.log("");
 
 let built = 0;
 let skipped = 0;
 let failed = 0;
+let skippedFreshPathCount = 0;
+let refreshedStale = 0;
+let writtenNormal = 0;
+let writtenUnknown = 0;
 let nextTaskIndex = 0;
 const workerCount = Math.min(threads, Math.max(1, users.length));
 
@@ -55,6 +63,9 @@ console.log("Build complete.");
 console.log(`Built: ${built}`);
 console.log(`Skipped: ${skipped}`);
 console.log(`Failed: ${failed}`);
+console.log(
+  `Built details: written=${writtenNormal}, refreshedStale=${refreshedStale}, skippedFreshPathCount=${skippedFreshPathCount}, unknown=${writtenUnknown}`
+);
 
 if (failed > 0) {
   process.exitCode = 1;
@@ -85,10 +96,21 @@ async function runWorker(workerId) {
       sourceFile,
       outputDir,
       quantizeScale,
+      skipIfPathCountSame,
+      maxAgeDays,
     });
 
     if (result.ok) {
       built += 1;
+      if (result.status === "skipped_fresh_path_count") {
+        skippedFreshPathCount += 1;
+      } else if (result.status === "written_stale_refresh") {
+        refreshedStale += 1;
+      } else if (result.status === "written") {
+        writtenNormal += 1;
+      } else {
+        writtenUnknown += 1;
+      }
       console.log(`${label} - done`);
     } else {
       failed += 1;
@@ -160,19 +182,39 @@ async function scanTravelerUsernames(tmgPath) {
   return travelers;
 }
 
-async function buildSingleUser({ projectRoot: root, username, sourceFile: src, outputDir: outDir, quantizeScale: q }) {
+async function buildSingleUser({
+  projectRoot: root,
+  username,
+  sourceFile: src,
+  outputDir: outDir,
+  quantizeScale: q,
+  skipIfPathCountSame: skipPathCount,
+  maxAgeDays: ageDays,
+}) {
   return new Promise((resolve) => {
     const scriptPath = path.resolve(root, "scripts/build-tmg-user-json.mjs");
     const child = spawn(
       process.execPath,
-      [scriptPath, `--user=${username}`, `--src=${src}`, `--outDir=${outDir}`, `--q=${q}`],
+      [
+        scriptPath,
+        `--user=${username}`,
+        `--src=${src}`,
+        `--outDir=${outDir}`,
+        `--q=${q}`,
+        `--skipIfPathCountSame=${skipPathCount ? "true" : "false"}`,
+        `--maxAgeDays=${ageDays}`,
+      ],
       {
         cwd: root,
-        stdio: ["ignore", "ignore", "pipe"],
+        stdio: ["ignore", "pipe", "pipe"],
       }
     );
 
+    let stdout = "";
     let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
     child.stderr.on("data", (chunk) => {
       stderr += chunk.toString();
     });
@@ -186,7 +228,10 @@ async function buildSingleUser({ projectRoot: root, username, sourceFile: src, o
 
     child.on("close", (code) => {
       if (code === 0) {
-        resolve({ ok: true });
+        resolve({
+          ok: true,
+          status: parseResultStatus(stdout),
+        });
         return;
       }
       const detail = stderr.trim();
@@ -264,4 +309,23 @@ function parseThreads(value) {
     throw new Error(`Invalid --threads value: ${value} (expected integer 1-64)`);
   }
   return parsed;
+}
+
+function parseMaxAgeDays(value) {
+  if (!value) {
+    return 0;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid --maxAgeDays value: ${value}`);
+  }
+  return parsed;
+}
+
+function parseResultStatus(stdout) {
+  const match = String(stdout || "").match(/RESULT_STATUS:\s*([a-z_]+)/);
+  if (!match) {
+    return "unknown";
+  }
+  return match[1];
 }

@@ -6,6 +6,7 @@ Scripts in this folder prepare deployable app data from Travel Mapping sources.
 
 - `build-tmg-user-json.mjs` - build JSON for one user
 - `build-all-tmg-user-json.mjs` - build JSON for all users
+- `analyze-tmg-user-diff.mjs` - summarize JSON diffs by category
 - `build-highway-json.mjs` - legacy script kept for reference
 
 ## `build-tmg-user-json.mjs`
@@ -32,6 +33,8 @@ node scripts/build-tmg-user-json.mjs --user=<username>
 - `--src=<path>`: TMG source file (default `data/tm-master-traveled.tmg`)
 - `--outDir=<path>`: output directory (default `data/tmg-users`)
 - `--q=<integer>`: quantization scale (default `100000`)
+- `--skipIfPathCountSame=true|false`: if true, keep existing file when path count is unchanged (default `false`)
+- `--maxAgeDays=<number>`: when skip mode is on, refresh stale files older than this age (default `0`)
 
 ### Examples
 
@@ -66,6 +69,8 @@ node scripts/build-all-tmg-user-json.mjs
 - `--q=<integer>`: quantization scale passed to each build (default `100000`)
 - `--threads=<integer>`: parallel worker count (default `4`)
 - `--force=true|false`: rebuild existing user files (default `false`)
+- `--skipIfPathCountSame=true|false`: pass-through to single-user builder (default `false`)
+- `--maxAgeDays=<number>`: pass-through stale threshold used by skip mode (default `0`)
 - `--startAt=<username>`: alphabetical resume point (useful after interruption)
 
 ### Examples
@@ -82,7 +87,7 @@ node scripts/build-all-tmg-user-json.mjs --force=true
 node scripts/build-all-tmg-user-json.mjs --threads=4
 ```
 
-## Legacy script
+```bash
+node scripts/build-all-tmg-user-json.mjs --skipIfPathCountSame=true --maxAgeDays=7
+```
 
-- `build-highway-json.mjs` remains in the repo for historical/reference purposes.
-- The app no longer loads `data/routes` or `data/route-index`.

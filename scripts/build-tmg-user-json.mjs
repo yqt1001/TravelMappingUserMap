@@ -18,10 +18,14 @@ const sourceFile = path.resolve(projectRoot, args.src || "data/tm-master-travele
 const outputDir = path.resolve(projectRoot, args.outDir || "data/tmg-users");
 const outputFile = path.join(outputDir, `${username}.json`);
 const quantizeScale = parseQuantizeScale(args.q);
+const skipIfPathCountSame = parseBool(args.skipIfPathCountSame, false);
+const maxAgeDays = parseMaxAgeDays(args.maxAgeDays);
 
 console.log(`TMG source: ${path.relative(projectRoot, sourceFile)}`);
 console.log(`Target user: ${username}`);
 console.log(`Quantize scale: ${quantizeScale}`);
+console.log(`Skip if path count same: ${skipIfPathCountSame ? "yes" : "no"}`);
+console.log(`Max age days for skip check: ${maxAgeDays}`);
 
 const meta = await scanMetaAndTraveler(sourceFile, username);
 if (!meta.userFound) {
@@ -44,29 +48,66 @@ const built = await buildCompactUserGeometry(
   quantizeScale
 );
 
+const payload = {
+  v: 2,
+  fmt: "tmg-user-compact",
+  user: username,
+  travelerIndex: meta.userIndex,
+  q: quantizeScale,
+  generated: new Date().toISOString(),
+  paths: built.paths,
+  stats: built.stats,
+};
+
+let refreshedDueToStale = false;
+if (skipIfPathCountSame) {
+  const existing = await readExistingJson(outputFile);
+  const stale = isStale(existing ? existing.generated : "", maxAgeDays);
+  if (
+    existing &&
+    Number(existing.v) === 2 &&
+    String(existing.fmt || "") === "tmg-user-compact" &&
+    String(existing.user || "") === username &&
+    Number(existing.q) === quantizeScale &&
+    Array.isArray(existing.paths) &&
+    existing.paths.length === payload.paths.length &&
+    !stale
+  ) {
+    console.log(
+      `Skipped write: same path count (${existing.paths.length}) and file is not stale.`
+    );
+    console.log("RESULT_STATUS: skipped_fresh_path_count");
+    process.exit(0);
+  }
+  if (
+    existing &&
+    Number(existing.v) === 2 &&
+    String(existing.fmt || "") === "tmg-user-compact" &&
+    String(existing.user || "") === username &&
+    Number(existing.q) === quantizeScale &&
+    Array.isArray(existing.paths) &&
+    existing.paths.length === payload.paths.length &&
+    stale
+  ) {
+    console.log(
+      `Path count matches (${existing.paths.length}) but file is stale; refreshing output.`
+    );
+    refreshedDueToStale = true;
+  }
+}
+
 await fs.mkdir(outputDir, { recursive: true });
-await fs.writeFile(
-  outputFile,
-  JSON.stringify(
-    {
-      v: 2,
-      fmt: "tmg-user-compact",
-      src: path.relative(projectRoot, sourceFile).split(path.sep).join("/"),
-      user: username,
-      travelerIndex: meta.userIndex,
-      q: quantizeScale,
-      paths: built.paths,
-      stats: built.stats,
-    },
-    null,
-    0
-  )
-);
+await fs.writeFile(outputFile, JSON.stringify(payload, null, 0));
 
 console.log(`Wrote: ${path.relative(projectRoot, outputFile)}`);
 console.log(`Raw traveled edges: ${built.stats.rawEdgeCount}`);
 console.log(`Merged paths: ${built.stats.mergedPathCount}`);
 console.log(`Output quantized points: ${built.stats.quantizedPointCount}`);
+if (refreshedDueToStale) {
+  console.log("RESULT_STATUS: written_stale_refresh");
+} else {
+  console.log("RESULT_STATUS: written");
+}
 
 async function scanMetaAndTraveler(tmgPath, usernameToFind) {
   const stream = createReadStream(tmgPath, { encoding: "utf8" });
@@ -455,4 +496,51 @@ function parseQuantizeScale(value) {
     throw new Error(`Invalid --q value: ${value}`);
   }
   return parsed;
+}
+
+function parseMaxAgeDays(value) {
+  if (!value) {
+    return 0;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid --maxAgeDays value: ${value}`);
+  }
+  return parsed;
+}
+
+async function readExistingJson(filePath) {
+  try {
+    const text = await fs.readFile(filePath, "utf8");
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function isStale(generatedValue, maxAgeDaysArg) {
+  const text = String(generatedValue || "").trim();
+  if (!text) {
+    return true;
+  }
+  const generatedMs = Date.parse(text);
+  if (!Number.isFinite(generatedMs)) {
+    return true;
+  }
+  const maxAgeMs = maxAgeDaysArg * 24 * 60 * 60 * 1000;
+  return Date.now() - generatedMs > maxAgeMs;
+}
+
+function parseBool(value, fallback) {
+  if (value === undefined) {
+    return fallback;
+  }
+  const text = String(value).trim().toLowerCase();
+  if (["1", "true", "yes", "y", "on"].includes(text)) {
+    return true;
+  }
+  if (["0", "false", "no", "n", "off"].includes(text)) {
+    return false;
+  }
+  throw new Error(`Invalid boolean value: ${value}`);
 }
