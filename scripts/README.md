@@ -18,6 +18,7 @@ Scripts in this folder prepare deployable app data from Travel Mapping sources.
 - Extracts edges traveled by that user only.
 - Merges contiguous traveled edges into longer polylines.
 - Quantizes coordinates into compact integer arrays.
+- Writes JSON with one `paths` entry per line for cleaner git diffs.
 - Writes output to `data/tmg-users/<username>.json`.
 
 ### Command

@@ -97,7 +97,7 @@ if (skipIfPathCountSame) {
 }
 
 await fs.mkdir(outputDir, { recursive: true });
-await fs.writeFile(outputFile, JSON.stringify(payload, null, 0));
+await fs.writeFile(outputFile, stringifyUserPayload(payload));
 
 console.log(`Wrote: ${path.relative(projectRoot, outputFile)}`);
 console.log(`Raw traveled edges: ${built.stats.rawEdgeCount}`);
@@ -543,4 +543,25 @@ function parseBool(value, fallback) {
     return false;
   }
   throw new Error(`Invalid boolean value: ${value}`);
+}
+
+function stringifyUserPayload(payload) {
+  const paths = Array.isArray(payload.paths) ? payload.paths : [];
+  const pathLines = paths.map((pathEntry) => JSON.stringify(pathEntry)).join(",\n");
+
+  const out =
+    `{` +
+    `"v":${JSON.stringify(payload.v)},` +
+    `"fmt":${JSON.stringify(payload.fmt)},` +
+    `"user":${JSON.stringify(payload.user)},` +
+    `"travelerIndex":${JSON.stringify(payload.travelerIndex)},` +
+    `"q":${JSON.stringify(payload.q)},` +
+    `"generated":${JSON.stringify(payload.generated)},` +
+    `"paths":[\n` +
+    pathLines +
+    `\n],` +
+    `"stats":${JSON.stringify(payload.stats || {})}` +
+    `}`;
+
+  return out;
 }

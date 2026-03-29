@@ -66,7 +66,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/build-all-tmg-user-json.mjs --force=true --src=tmp/tm-master-traveled.tmg --threads=2 --skipIfPathCountSame=true --maxAgeDays=3
+          node scripts/build-all-tmg-user-json.mjs --force=true --src=tmp/tm-master-traveled.tmg --threads=2 --skipIfPathCountSame=false --maxAgeDays=0
 
       - name: Update source hash marker
         if: steps.source.outputs.source_changed == 'true'
