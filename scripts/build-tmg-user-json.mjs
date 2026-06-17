@@ -59,9 +59,16 @@ const payload = {
   stats: built.stats,
 };
 
+const existingPayload = await readExistingJson(outputFile);
+if (isSameGeneratedData(existingPayload, payload)) {
+  console.log("Skipped write: generated data is unchanged.");
+  console.log("RESULT_STATUS: skipped_unchanged_data");
+  process.exit(0);
+}
+
 let refreshedDueToStale = false;
 if (skipIfPathCountSame) {
-  const existing = await readExistingJson(outputFile);
+  const existing = existingPayload;
   const stale = isStale(existing ? existing.generated : "", maxAgeDays);
   if (
     existing &&
@@ -529,6 +536,25 @@ function isStale(generatedValue, maxAgeDaysArg) {
   }
   const maxAgeMs = maxAgeDaysArg * 24 * 60 * 60 * 1000;
   return Date.now() - generatedMs > maxAgeMs;
+}
+
+function isSameGeneratedData(existing, next) {
+  if (!existing || typeof existing !== "object") {
+    return false;
+  }
+  return JSON.stringify(comparablePayload(existing)) === JSON.stringify(comparablePayload(next));
+}
+
+function comparablePayload(payload) {
+  return {
+    v: Number(payload.v),
+    fmt: String(payload.fmt || ""),
+    user: String(payload.user || ""),
+    travelerIndex: Number(payload.travelerIndex),
+    q: Number(payload.q),
+    paths: Array.isArray(payload.paths) ? payload.paths : [],
+    stats: payload.stats || {},
+  };
 }
 
 function parseBool(value, fallback) {

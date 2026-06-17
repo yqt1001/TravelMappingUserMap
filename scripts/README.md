@@ -19,6 +19,7 @@ Scripts in this folder prepare deployable app data from Travel Mapping sources.
 - Merges contiguous traveled edges into longer polylines.
 - Quantizes coordinates into compact integer arrays.
 - Writes JSON with one `paths` entry per line for cleaner git diffs.
+- Leaves an existing output untouched when the regenerated data matches, so `generated` only changes when that user's data changes.
 - Writes output to `data/tmg-users/<username>.json`.
 
 ### Command
@@ -53,6 +54,7 @@ node scripts/build-tmg-user-json.mjs --user=mapcat --q=100000
 
 - Reads traveler usernames from the TMG traveler line.
 - Runs the single-user builder for each traveler.
+- Leaves unchanged per-user JSON files untouched, even during forced rebuilds.
 - Writes outputs to `data/tmg-users/<username>.json`.
 
 ### Command

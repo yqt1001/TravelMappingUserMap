@@ -47,6 +47,7 @@ let built = 0;
 let skipped = 0;
 let failed = 0;
 let skippedFreshPathCount = 0;
+let skippedUnchangedData = 0;
 let refreshedStale = 0;
 let writtenNormal = 0;
 let writtenUnknown = 0;
@@ -64,7 +65,7 @@ console.log(`Built: ${built}`);
 console.log(`Skipped: ${skipped}`);
 console.log(`Failed: ${failed}`);
 console.log(
-  `Built details: written=${writtenNormal}, refreshedStale=${refreshedStale}, skippedFreshPathCount=${skippedFreshPathCount}, unknown=${writtenUnknown}`
+  `Built details: written=${writtenNormal}, refreshedStale=${refreshedStale}, skippedUnchangedData=${skippedUnchangedData}, skippedFreshPathCount=${skippedFreshPathCount}, unknown=${writtenUnknown}`
 );
 
 if (failed > 0) {
@@ -104,6 +105,8 @@ async function runWorker(workerId) {
       built += 1;
       if (result.status === "skipped_fresh_path_count") {
         skippedFreshPathCount += 1;
+      } else if (result.status === "skipped_unchanged_data") {
+        skippedUnchangedData += 1;
       } else if (result.status === "written_stale_refresh") {
         refreshedStale += 1;
       } else if (result.status === "written") {
